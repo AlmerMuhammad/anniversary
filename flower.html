@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Letters of Love</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Jost:wght@200;300;400;500;600&display=swap" rel="stylesheet"/>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <style>
+    /* --- CSS Variables & Design System --- */
+    :root {
+      --letter-w: 320px;
+      --letter-h: 440px;
+      --polaroid-w: 260px; /* Wider for landscape presentation */
+      --polaroid-h: 180px; 
+      --polaroid-bg: linear-gradient(150deg, #fff7ec 0%, #ffe7d6 55%, #ffd9c7 100%);
+      --bouquet-w: 240px;
+      --ticket-w: 280px;
+      --letter-font: "Dancing Script", serif;
+    }
+
+    @media (min-width: 650px) {
+      :root {
+        --letter-w: 420px;
+        --letter-h: 580px;
+        --polaroid-w: 340px;
+        --polaroid-h: 240px;
+        --bouquet-w: 320px;
+        --ticket-w: 340px;
+      }
+    }
+
+    /* --- Base Layout --- */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('Cloth.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-color: #1e120c;
+    }
+
+    /* --- Fade-In Reveal Overlay --- */
+    .reveal-overlay {
+      position: fixed;
+      inset: 0;
+      background-color: #1e120c;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 1;
+      transition: opacity 1.2s ease-in-out;
+      pointer-events: auto;
+    }
+    .reveal-overlay.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .reveal-heart {
+      font-size: 3rem;
+      color: #ffd9c7;
+      animation: heartbeat 1.4s infinite alternate ease-in-out;
+    }
+    @keyframes heartbeat {
+      to { transform: scale(1.2); }
+    }
+
+    /* --- Sandbox Layer --- */
+    .sandbox-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    /* --- Interactive Flying Base --- */
+    .interactive-item {
+      position: absolute;
+      left: 50%;
+      bottom: -700px; /* Hidden below viewport boundary */
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, 0) scale(0.4) rotate(0deg);
+      cursor: grab;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .interactive-item:active { cursor: grabbing; }
+
+    /* Animation class triggered on load */
+    .interactive-item.tossed {
+      opacity: 1;
+      pointer-events: auto;
+      bottom: auto;
+      top: 50%;
+      transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1) rotate(var(--trot));
+      transition: transform 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.15), 
+                  opacity 0.6s ease-out, 
+                  top 0s 0s, 
+                  left 0s 0s;
+    }
+
+    /* --- 1. Paper Letter Specifics --- */
+    .paper-letter {
+      width: var(--letter-w);
+      height: var(--letter-h);
+      filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.45));
+      border-radius: 0;
+      background-color: transparent; 
+      overflow: visible;
+    }
+
+    .paper-letter img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    /* --- 2. Landscape Polaroid Containers --- */
+    .polaroid {
+      width: var(--polaroid-w);
+      background: var(--polaroid-bg);
+      padding: 12px 12px 44px;
+      box-shadow: 0 12px 25px rgba(0, 0, 0, 0.45);
+      font-family: var(--letter-font);
+      text-align: center;
+    }
+
+    .polaroid .media-frame {
+      position: relative;
+      width: 100%;
+      height: calc(var(--polaroid-h) - 20px);
+      background: #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+    }
+
+    .polaroid .media-frame img, 
+    .polaroid .media-frame video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .polaroid .caption {
+      margin-top: 10px;
+      font-size: 1.2rem;
+      color: #3a2a20;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* --- Scratchable Layer Canvas Overlay --- */
+    .scratch-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 5;
+      touch-action: none;
+      cursor: crosshair;
+      opacity: 1;
+      transition: opacity 0.5s ease-out;
+    }
+    
+    .scratch-canvas.cleared {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* --- 3. Big Bouquet Specifics --- */
+    .big-bouquet {
+      width: var(--bouquet-w);
+      filter: drop-shadow(0 15px 30px rgba(0, 0, 0, 0.4));
+    }
+
+    .big-bouquet img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* --- 4. Custom Ticket Thingy Component --- */
+    .love-ticket {
+      width: var(--ticket-w);
+      background: linear-gradient(135deg, #ffd9c7 0%, #ffccb0 100%);
+      color: #4a2810;
+      padding: 18px;
+      font-family: "Jost", sans-serif;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.4);
+      border: 2px dashed #b57c59;
+      border-radius: 8px;
+      text-align: left;
+      cursor: pointer;
+    }
+    .ticket-header {
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: #8c4f2b;
+      margin-bottom: 8px;
+      border-bottom: 1px dashed rgba(74, 40, 16, 0.2);
+      padding-bottom: 4px;
+    }
+    .ticket-body {
+      font-family: var(--letter-font);
+      font-size: 2rem;
+      line-height: 1.2;
+      margin: 6px 0;
+    }
+    .ticket-footer {
+      font-size: 0.7rem;
+      text-align: right;
+      color: #8c4f2b;
+      margin-top: 8px;
+    }
+
+    /* --- Modal Inspection System --- */
+    .inspect-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 8, 5, 0.75);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+    .inspect-modal.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-content {
+      background: #fffdfa;
+      padding: 24px;
+      width: 90%;
+      max-width: 400px;
+      border-radius: 12px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+      text-align: center;
+      transform: scale(0.9);
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+    }
+    .inspect-modal.active .modal-content {
+      transform: scale(1);
+    }
+    .modal-title {
+      font-family: "Jost", sans-serif;
+      font-size: 1.1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #3a2a20;
+      margin-bottom: 12px;
+    }
+    .modal-desc {
+      font-family: var(--letter-font);
+      font-size: 1.6rem;
+      color: #5c3f2e;
+      background: #fdf5ef;
+      padding: 16px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      border: 1px solid #f2decb;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+    .modal-btn {
+      font-family: "Jost", sans-serif;
+      border: none;
+      padding: 8px 20px;
+      font-size: 0.9rem;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-download {
+      background: #8c4f2b;
+      color: #fff;
+    }
+    .btn-download:hover { background: #6e3a1d; }
+    .btn-close {
+      background: #e0dcd8;
+      color: #4a4642;
+    }
+    .btn-close:hover { background: #ced2ce; }
+
+    /* --- UI Interface Controls --- */
+    .bottom-actions {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .replay-btn {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff7f7;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      font-family: "Jost", sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: 0.85rem;
+      padding: 8px 22px;
+      border-radius: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      transition: all 0.3s ease;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .replay-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    }
+
+    .back-btn {
+      background: rgba(178, 34, 34, 0.75);
+      color: #fff7f7;
+      border: 1px solid rgba(255, 120, 120, 0.5);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      font-family: "Jost", sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: 0.85rem;
+      padding: 8px 22px;
+      border-radius: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      transition: all 0.3s ease;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .back-btn:hover {
+      background: rgba(178, 34, 34, 0.9);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    }
+  </style>
+</head>
+<body>
+
+<div class="reveal-overlay" id="revealOverlay">
+  <div class="reveal-heart">❤</div>
+</div>
+
+<main class="sandbox-layer" id="sandboxLayer">
+
+  <div class="interactive-item paper-letter" id="itemLetter">
+    <img src="assets/letter/LetterPaper.png" alt="LetterPaper.png">
+  </div>
+
+  <div class="interactive-item polaroid" id="polaroidPic1">
+    <div class="media-frame">
+      <img src="assets/amengina/amenginapic1.jpeg" alt="Photo 1" onerror="this.style.display='none'; this.parentNode.innerText='📸'">
+      <canvas class="scratch-canvas"></canvas>
+    </div>
+    <div class="caption">01</div>
+  </div>
+
+  <div class="interactive-item polaroid" id="polaroidPic2">
+    <div class="media-frame">
+      <img src="assets/amengina/amenginapic2.jpeg" alt="Photo 2" onerror="this.style.display='none'; this.parentNode.innerText='🥰'">
+      <canvas class="scratch-canvas"></canvas>
+    </div>
+    <div class="caption">02</div>
+  </div>
+
+  <div class="interactive-item polaroid" id="polaroidVid1">
+    <div class="media-frame">
+      <video src="assets/amengina/amenginavid1.mp4" loop muted autoplay playsinline></video>
+      <canvas class="scratch-canvas"></canvas>
+    </div>
+    <div class="caption">01</div>
+  </div>
+
+  <div class="interactive-item polaroid" id="polaroidVid2">
+    <div class="media-frame">
+      <video src="assets/amengina/amenginavid2.mp4" loop muted autoplay playsinline></video>
+      <canvas class="scratch-canvas"></canvas>
+    </div>
+    <div class="caption">02</div>
+  </div>
+
+  <div class="interactive-item polaroid" id="polaroidVid3">
+    <div class="media-frame">
+      <video src="assets/amengina/amenginavid3.mp4" loop muted autoplay playsinline></video>
+      <canvas class="scratch-canvas"></canvas>
+    </div>
+    <div class="caption">03</div>
+  </div>
+
+  <div class="interactive-item polaroid" id="polaroidVid4">
+    <div class="media-frame">
+      <video src="assets/amengina/amenginavid4.mp4" loop muted autoplay playsinline></video>
+      <canvas class="scratch-canvas"></canvas>
+    </div>
+    <div class="caption">04</div>
+  </div>
+
+  <div class="interactive-item love-ticket" id="itemTicket">
+    <div class="ticket-header">Admission Ticket</div>
+    <div class="ticket-body">ticket date, kirim ke ame</div>
+    <div class="ticket-footer">Inspect Document • Click Me</div>
+  </div>
+
+  <div class="interactive-item big-bouquet" id="itemBouquet">
+    <img src="assets/stickers/bouquet.png" alt="Big Bouquet" onerror="this.style.display='none'; this.parentNode.innerText='💐'">
+  </div>
+
+</main>
+
+<div class="inspect-modal" id="ticketModal">
+  <div class="modal-content">
+    <div class="modal-title">Ticket Registry Info</div>
+    <div class="modal-desc" id="modalText">ticket date, kirim ke ame</div>
+    <div class="modal-actions">
+      <button class="modal-btn btn-download" id="downloadBtn">Download Image</button>
+      <button class="modal-btn btn-close" id="closeBtn">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-actions">
+  <button class="replay-btn" id="tossBtn">Toss Items out ˚ʚ❤︎ɞ˚</button>
+  <a class="back-btn" href="index.html">Back to Start</a>
+</div>
+
+ <!-- Audio Element -->
+<audio id="pageAudio" src="music/Pelangi.mp3" loop preload="auto"></audio>
+
+<script>
+  let zIndexCounter = 100;
+
+  /* Target landing matrix points safely fanned out */
+  const trajectoryPlan = [
+    { id: 'itemLetter',   x: () => rnd(-0.28, -0.10) * vw(), y: () => rnd(-0.25, -0.05) * vh(), rot: () => rnd(-6, 4),   delay: 0 },
+    
+    { id: 'polaroidPic1',  x: () => rnd(0.12, 0.28) * vw(),   y: () => rnd(-0.35, -0.15) * vh(), rot: () => rnd(-10, -2), delay: 100 },
+    { id: 'polaroidPic2',  x: () => rnd(0.18, 0.34) * vw(),   y: () => rnd(0.08, 0.28) * vh(),    rot: () => rnd(4, 12),   delay: 200 },
+    { id: 'polaroidPic3',  x: () => rnd(0.02, 0.18) * vw(),   y: () => rnd(-0.15, 0.10) * vh(),   rot: () => rnd(-5, 8),   delay: 300 },
+    
+    { id: 'polaroidVid1',  x: () => rnd(-0.36, -0.18) * vw(), y: () => rnd(0.10, 0.30) * vh(),    rot: () => rnd(-12, -4), delay: 400 },
+    { id: 'polaroidVid2',  x: () => rnd(-0.15, 0.05) * vw(),  y: () => rnd(-0.35, -0.18) * vh(),  rot: () => rnd(5, 15),   delay: 500 },
+    { id: 'polaroidVid3',  x: () => rnd(-0.38, -0.20) * vw(), y: () => rnd(-0.20, 0.02) * vh(),   rot: () => rnd(-8, -1),  delay: 600 },
+    { id: 'polaroidVid4',  x: () => rnd(0.20, 0.38) * vw(),   y: () => rnd(-0.10, 0.15) * vh(),   rot: () => rnd(-4, 10),  delay: 700 },
+    
+    { id: 'itemTicket',   x: () => rnd(-0.25, -0.05) * vw(), y: () => rnd(0.12, 0.32) * vh(),    rot: () => rnd(-15, -3), delay: 750 },
+    { id: 'itemBouquet',  x: () => rnd(-0.08, 0.12) * vw(),  y: () => rnd(0.08, 0.25) * vh(),   rot: () => rnd(-4, 6),   delay: 850 }
+  ];
+
+  function vw() { return Math.min(window.innerWidth, 1200); }
+  function vh() { return Math.min(window.innerHeight, 900); }
+  function rnd(min, max) { return min + Math.random() * (max - min); }
+
+  function launchSequence() {
+    trajectoryPlan.forEach((plan) => {
+      const el = document.getElementById(plan.id);
+      if (!el) return;
+
+      el.classList.remove('tossed');
+      el.style.left = '';
+      el.style.top = '';
+      el.style.position = '';
+
+      setTimeout(() => {
+        el.style.setProperty('--tx', plan.x() + 'px');
+        el.style.setProperty('--ty', plan.y() + 'px');
+        el.style.setProperty('--trot', plan.rot() + 'deg');
+        el.classList.add('tossed');
+        el.style.zIndex = zIndexCounter++;
+        makeDraggable(el);
+        
+        const canvas = el.querySelector('.scratch-canvas');
+        if (canvas) setupScratchCanvas(canvas);
+      }, plan.delay);
+    });
+  }
+
+  /* ===================== Canvas Scratch Overlay Mechanics ===================== */
+  function setupScratchCanvas(canvas) {
+    const frame = canvas.parentNode;
+    const width = frame.clientWidth || 260;
+    const height = frame.clientHeight || 160;
+    
+    canvas.width = width;
+    canvas.height = height;
+    canvas.classList.remove('cleared');
+    
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.fillStyle = '#cfd8dc';
+    ctx.fillRect(0, 0, width, height);
+    
+    ctx.fillStyle = '#b0bec5';
+    ctx.font = '24px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Scratch Me ❤', width / 2, height / 2);
+
+    let isDrawing = false;
+
+    function checkRevealPercentage() {
+      const imgData = ctx.getImageData(0, 0, width, height);
+      const pixels = imgData.data;
+      let clearedPixels = 0;
+
+      for (let i = 3; i < pixels.length; i += 4) {
+        if (pixels[i] === 0) { clearedPixels++; }
+      }
+
+      const totalPixels = pixels.length / 4;
+      const percentCleared = (clearedPixels / totalPixels) * 100;
+
+      if (percentCleared >= 50) {
+        canvas.classList.add('cleared');
+        isDrawing = false;
+        cleanupEvents();
+      }
+    }
+
+    function scratch(e) {
+      if (!isDrawing || canvas.classList.contains('cleared')) return;
+      
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+      const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+      
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.beginPath();
+      ctx.arc(x, y, 26, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function handleStart(e) {
+      if (canvas.classList.contains('cleared')) return;
+      isDrawing = true;
+      scratch(e);
+    }
+
+    function handleEnd() {
+      if (isDrawing) {
+        isDrawing = false;
+        checkRevealPercentage();
+      }
+    }
+
+    canvas.addEventListener('mousedown', handleStart);
+    canvas.addEventListener('touchstart', handleStart);
+    canvas.addEventListener('mousemove', scratch);
+    canvas.addEventListener('touchmove', scratch, { passive: false });
+    
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchend', handleEnd);
+
+    function cleanupEvents() {
+      canvas.removeEventListener('mousedown', handleStart);
+      canvas.removeEventListener('touchstart', handleStart);
+      canvas.removeEventListener('mousemove', scratch);
+      canvas.removeEventListener('touchmove', scratch);
+    }
+  }
+
+  /* ===================== Interactive Draggable Logic ===================== */
+  function makeDraggable(el) {
+    if (el.dataset.draggable === 'true') return;
+    el.dataset.draggable = 'true';
+
+    let isDraggingGesture = false;
+
+    const dragStarter = (e) => {
+      if (e.target.classList.contains('scratch-canvas') && !e.target.classList.contains('cleared')) return;
+
+      isDraggingGesture = false;
+      const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+      const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+
+      const rect = el.getBoundingClientRect();
+      el.style.transition = 'none';
+      el.style.position = 'fixed';
+      el.style.left = rect.left + 'px';
+      el.style.top = rect.top + 'px';
+      el.style.transform = 'none';
+      el.style.zIndex = zIndexCounter++;
+
+      const offsetX = clientX - rect.left;
+      const offsetY = clientY - rect.top;
+
+      const onMove = (moveEvent) => {
+        isDraggingGesture = true;
+        const mX = moveEvent.type.includes('touch') ? moveEvent.touches[0].clientX : moveEvent.clientX;
+        const mY = moveEvent.type.includes('touch') ? moveEvent.touches[0].clientY : moveEvent.clientY;
+        el.style.left = (mX - offsetX) + 'px';
+        el.style.top = (mY - offsetY) + 'px';
+      };
+
+      const onUp = () => {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        document.removeEventListener('touchmove', onMove);
+        document.removeEventListener('touchend', onUp);
+
+        if (!isDraggingGesture && el.id === 'itemTicket') {
+          openTicketInspector();
+        }
+      };
+
+      if (e.type.includes('touch')) {
+        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('touchend', onUp);
+      } else {
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+        e.preventDefault();
+      }
+    };
+
+    el.addEventListener('mousedown', dragStarter);
+    el.addEventListener('touchstart', dragStarter, { passive: true });
+  }
+
+  /* ===================== Modal Inspector & HTML-to-Image Generation ===================== */
+  const modal = document.getElementById('ticketModal');
+  const ticketTarget = document.getElementById('itemTicket');
+  
+  function openTicketInspector() {
+    modal.classList.add('active');
+  }
+  
+  document.getElementById('closeBtn').addEventListener('click', () => {
+    modal.classList.remove('active');
+  });
+
+  document.getElementById('downloadBtn').addEventListener('click', () => {
+    // Generate an image screenshot from the live DOM element styling
+    html2canvas(ticketTarget, {
+      backgroundColor: null, // Transparent background context outside ticket border boundaries
+      scale: 2              // Double up scaling for a sharper high-def PNG output asset
+    }).then(canvas => {
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = 'ticket_date.png';
+      link.click();
+    });
+  });
+
+  // Entry Lifecycle Animation Completion Handlers
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      document.getElementById('revealOverlay').classList.add('fade-out');
+      launchSequence();
+    }, 600);
+  });
+  
+  document.getElementById('tossBtn').addEventListener('click', launchSequence);
+
+  // ===========================
+// SAFE AUDIO START (User Interaction Required)
+// ===========================
+const pageAudio = document.getElementById("pageAudio");
+let audioStarted = false;
+
+function initAudio() {
+  if (audioStarted) return;
+
+  pageAudio.volume = 0.8;
+  pageAudio.play().then(() => {
+    audioStarted = true;
+    console.log("Audio started successfully");
+  }).catch(err => {
+    console.log("Audio failed:", err);
+  });
+}
+
+// Start audio on first user interaction
+document.addEventListener("click", initAudio, { once: true });
+document.addEventListener("touchstart", initAudio, { once: true });
+document.addEventListener("keydown", initAudio, { once: true });
+
+</script>
+</body>
+</html>

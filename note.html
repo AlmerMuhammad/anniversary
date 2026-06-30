@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Letters of Love</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Jost:wght@200;300;400;500;600&display=swap" rel="stylesheet"/>
+
+  <style>
+    /* --- CSS Variables & Design System --- */
+  :root {
+    --envelope-x: 300px;
+    --envelope-y: 200px;
+    --envelope-bg: Moccasin;
+    --envelope-shadow: Peru;
+    --letter-x: 250px;
+    --letter-y: calc(250px - 1rem - 10px);
+    --letter-bg: AntiqueWhite;
+    --letter-shadow: BurlyWood;
+    --letter-text: #180d07;
+    --letter-font: "Dancing Script", serif;
+    --letter-button-text: darkred;
+    --heart-bg: darkred;
+    --heart-text: white;
+    --polaroid-bg: linear-gradient(150deg, #fff7ec 0%, #ffe7d6 55%, #ffd9c7 100%);
+    --sticker-size: 100px;
+    --sticker-size-lg: 190px;
+  }
+
+  @media (min-width: 650px) {
+    :root {
+      --envelope-x: 600px;
+      --envelope-y: 400px;
+      --letter-x: 500px;
+      --letter-y: calc(400px - 1rem - 10px);
+      --sticker-size: 130px;
+      --sticker-size-lg: 260px;
+    }
+  }
+
+  /* --- Base Layout --- */
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html { font-size: 20px; }
+
+  body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    /* --- IMAGE BACKGROUND STYLING --- */
+    background-image: linear-gradient(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.25)), url('Cloth.jpg');
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  /* --- Flower Intro Transition --- */
+  #intro-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    background-color: #000000; /* Start completely black */
+    animation: fadeOutOverlay 1.5s 4.0s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .intro-flower {
+    position: absolute;
+    width: var(--size);
+    height: var(--size);
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    pointer-events: none;
+    opacity: 0;
+    transform-origin: center center;
+    animation: spiralOut var(--duration) var(--delay) cubic-bezier(0.2, 0.6, 0.4, 1) forwards;
+  }
+
+  @keyframes spiralOut {
+    0% { opacity: 0; transform: translate(0px, 0px) scale(0.1); }
+    10% { opacity: 1; }
+    50% { opacity: 1; transform: translate(var(--tx-mid), var(--ty-mid)) scale(var(--scale-mid)) rotate(var(--rot-mid)); }
+    100% { opacity: 1; transform: translate(var(--tx), var(--ty)) scale(var(--scale-end)) rotate(var(--rot-end)); }
+  }
+
+  @keyframes fadeOutOverlay {
+    0%   { opacity: 1; background-color: #000000; }
+    70%  { opacity: 1; background-color: rgba(0, 0, 0, 0); }
+    100% { opacity: 0; visibility: hidden; background-color: rgba(0, 0, 0, 0); }
+  }
+
+  /* --- Outro Dim Transition (before navigating to flower.html) --- */
+  #dim-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    background-color: #000000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 1.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  #dim-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  /* --- Core Page Reveal --- */
+  .cssletter {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    -webkit-user-select: none;
+    margin: 24dvh 0;
+    z-index: 10;
+    opacity: 0;
+    animation: revealPage 1.5s 4.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes revealPage {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* --- Envelope Styling --- */
+  .envelope {
+    position: relative;
+    width: var(--envelope-x);
+    height: var(--envelope-y);
+    background: var(--envelope-bg);
+    box-shadow: inset 0 0 30px -5px var(--envelope-shadow), 0 15px 35px rgba(0, 0, 0, 0.4);
+  }
+
+  .envelope::before {
+    content: "˚ʚ❤︎ɞ˚";
+    font-size: 5rem;
+    color: white;
+    position: absolute;
+    left: 50%;
+    top: 30%;
+    transform: translate(-50%, -50%);
+    mix-blend-mode: soft-light;
+  }
+
+  .envelope-flap {
+    width: 100%;
+    height: 71%;
+    position: absolute;
+    top: 0;
+    z-index: 3;
+    overflow: hidden;
+    transition: 0.6s linear all;
+    transform-origin: top;
+    pointer-events: all;
+  }
+
+  .envelope-folds {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: 2;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+
+  .envelope-flap::before,
+  .envelope-left::before,
+  .envelope-right::before,
+  .envelope-bottom::before {
+    content: "";
+    transform: rotate(45deg);
+    background: var(--envelope-bg);
+    box-shadow: 0 0 30px -5px var(--envelope-shadow);
+    width: 100%;
+    aspect-ratio: 1;
+    display: block;
+    position: absolute;
+    top: 60%;
+  }
+
+  .envelope-flap::before { border-radius: 5rem; bottom: 30px; top: auto; }
+
+  @media (min-width: 650px) {
+    .envelope-flap::before { bottom: 100px; }
+  }
+
+  .envelope-left::before { top: 10%; left: -65%; }
+  .envelope-right::before { top: 10%; right: -65%; }
+  .envelope-bottom::before { top: 60%; border-radius: 5rem; }
+
+  /* --- Heart Trigger Mechanism --- */
+  .heart {
+    z-index: 4;
+    position: relative;
+    box-shadow: none;
+    border: none;
+    width: 70px;
+    aspect-ratio: 1;
+    background: radial-gradient(circle at 60% 65%, var(--heart-bg) 64%, #0000 65%) top left/50% 50%,
+                radial-gradient(circle at 40% 65%, var(--heart-bg) 64%, #0000 65%) top right/50% 50%,
+                conic-gradient(from -45deg at 50% 85.5%, var(--heart-bg) 90deg, #0000 0) bottom/100% 50%;
+    background-repeat: no-repeat;
+    left: 50%;
+    top: 70%;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+  }
+
+  @media (min-width: 650px) {
+    .heart { width: 150px; }
+  }
+
+  .heart::before {
+    content: "";
+    display: block;
+    position: absolute;
+    width: 70px;
+    aspect-ratio: 1;
+    background: radial-gradient(circle at 60% 65%, #ffffff26 64%, #0000 65%) top left/50% 50%,
+                radial-gradient(circle at 40% 65%, #ffffff26 64%, #0000 65%) top right/50% 50%,
+                conic-gradient(from -45deg at 50% 85.5%, #ffffff26 90deg, #0000 0) bottom/100% 50%;
+    background-repeat: no-repeat;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    transition: 0.3s ease all;
+    z-index: -1;
+  }
+
+  @media (min-width: 650px) {
+    .heart::before { width: 150px; }
+  }
+
+  .heart:hover, .heart:active, .heart:focus {
+    transform: translate(-50%, -50%);
+    background-color: transparent;
+    color: var(--heart-text);
+  }
+
+  .heart:hover::before, .heart:active::before, .heart:focus::before {
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+
+  .heart-text {
+    transform: translateY(-10px);
+    display: block;
+    color: var(--heart-text);
+    font-size: 1.5rem;
+    font-family: var(--letter-font);
+  }
+
+  /* --- Envelope Opening States --- */
+  .envelope.active * { pointer-events: none; }
+  .envelope.active .envelope-flap { transform: rotateX(-180deg) translateY(0); perspective: 10px; }
+  .envelope.active .envelope-flap::before { box-shadow: inset 0 0 30px -5px var(--envelope-shadow); }
+  .envelope.active .heart { display: none; }
+
+  /* --- Burst items container --- */
+  .burst-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    pointer-events: none;
+  }
+
+  /* Shared "flying item" behavior */
+  .burst-item {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -50%) scale(0.2) rotate(0deg);
+    transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+    cursor: grab;
+  }
+
+  .burst-item:active { cursor: grabbing; }
+
+  .burst-item.flying {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(calc(-50% + var(--fx)), calc(-50% + var(--fy))) scale(var(--fscale, 1)) rotate(var(--frot, 0deg));
+  }
+
+  /* --- Letter Cards 3D Flipping Styling --- */
+  .letter-card {
+    width: var(--letter-x);
+    height: var(--letter-y);
+    perspective: 1000px;
+  }
+
+  .letter-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* When active and flipped */
+  .letter-card.flipped .letter-inner {
+    transform: rotateY(180deg);
+  }
+
+  .letter-front, .letter-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: 4px;
+    box-shadow: inset 0 0 20px -5px var(--letter-shadow), 0 10px 25px -8px #000a;
+  }
+
+  /* Front Cover of the Letter */
+  .letter-front {
+    background-color: var(--letter-bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    cursor: pointer;
+  }
+
+  .cover-wave {
+    width: 85%;
+    max-height: 65%;
+    object-fit: contain;
+    margin-bottom: 0.75rem;
+    pointer-events: none;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.15));
+  }
+
+  .flip-hint {
+    font-family: var(--letter-font);
+    font-size: 1.2rem;
+    color: var(--letter-button-text);
+    pointer-events: none;
+    animation: pulseHint 2.5s infinite ease-in-out;
+  }
+
+  @keyframes pulseHint {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.05); }
+  }
+
+  /* Back Secret Content of the Letter */
+  .letter-back {
+    background-color: var(--letter-bg);
+    color: var(--letter-text);
+    font-family: var(--letter-font);
+    font-size: 1rem;
+    line-height: 1.1;
+    padding: 3rem 1rem 1rem;
+    margin: 0;
+    overflow: auto;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    transform: rotateY(180deg);
+  }
+
+  .letter-card .flower-link {
+    text-decoration: none;
+    margin-top: 1rem;
+    pointer-events: auto !important;
+    display: inline-block;
+  }
+
+  .cite-btn {
+    background: none;
+    border: none;
+    font-family: var(--letter-font);
+    font-size: 1.25rem;
+    color: var(--letter-text);
+    cursor: pointer;
+    padding: 4px 12px;
+    border-radius: 15px;
+    transition: all 0.3s ease;
+  }
+
+  .cite-btn:hover {
+    background-color: rgba(139, 0, 0, 0.1);
+    color: var(--letter-button-text);
+    transform: scale(1.05);
+  }
+
+  @media (min-width: 650px) {
+    .letter-back { font-size: 1.3rem; }
+    .cite-btn { font-size: 1.5rem; }
+  }
+
+  .closeLetter {
+    font-size: 0 !important;
+    position: absolute;
+    top: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: none;
+    box-shadow: none;
+    padding: 0;
+    border: 0;
+    cursor: pointer;
+    pointer-events: auto !important;
+    z-index: 10;
+  }
+
+  .closeLetter::before {
+    content: "˚ʚ❤︎ɞ˚";
+    font-size: 1.5rem !important;
+    font-family: var(--letter-font);
+    color: var(--letter-button-text);
+    text-align: center;
+  }
+
+  .closeLetter:hover::before,
+  .closeLetter:active::before,
+  .closeLetter:focus::before { content: "xXx"; }
+
+  /* --- Polaroids --- */
+  .polaroid {
+    width: 170px;
+    background: var(--polaroid-bg);
+    padding: 12px 12px 40px;
+    box-shadow: 0 12px 25px -8px #000c;
+    font-family: var(--letter-font);
+    text-align: center;
+  }
+
+  .polaroid .photo {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: linear-gradient(135deg, #f7c6d9, #f29bb0 40%, #e26a8e);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    overflow: hidden;
+  }
+
+  .polaroid .photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .polaroid .caption {
+    margin-top: 10px;
+    font-size: 1.1rem;
+    color: #3a2a20;
+  }
+
+  /* --- Scratch Card Component --- */
+  .scratch-container {
+    position: relative;
+    width: 260px;
+    height: 160px;
+    background: #fffdf8;
+    border-radius: 12px;
+    box-shadow: 0 12px 25px -8px rgba(0,0,0,0.5);
+    overflow: hidden;
+  }
+
+  .scratch-content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    text-align: center;
+    font-family: var(--letter-font);
+    color: #180d07;
+    background: var(--letter-bg);
+  }
+
+  .scratch-content h4 {
+    font-size: 1.4rem;
+    margin-bottom: 4px;
+    color: var(--letter-button-text);
+  }
+
+  .scratch-content p {
+    font-size: 1rem;
+    line-height: 1.2;
+  }
+
+  .scratch-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    cursor: radial-gradient(circle, transparent 10px, rgba(0,0,0,0.4) 11px), pointer;
+    touch-action: none;
+  }
+
+  /* --- Enhanced Spotify Card --- */
+  .spotify-card {
+    width: 280px;
+    background: rgba(18, 18, 18, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 14px;
+    box-shadow: 0 16px 35px -10px rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-family: "Jost", sans-serif;
+    color: #fff;
+  }
+
+  .spotify-art {
+    width: 68px;
+    height: 68px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    background: #282828;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+
+  .spotify-art img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .spotify-info { flex: 1; min-width: 0; }
+  .spotify-title { font-size: 0.95rem; font-weight: 600; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .spotify-artist { font-size: 0.8rem; color: #b3b3b3; font-weight: 400; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .spotify-bars { display: flex; align-items: flex-end; gap: 3px; height: 16px; margin-top: 8px; }
+  .spotify-bars span {
+    width: 3px;
+    background: #1db954;
+    display: inline-block;
+    border-radius: 1px;
+    animation: eq 1s ease-in-out infinite;
+  }
+  .spotify-bars span:nth-child(1) { height: 40%; animation-delay: 0s; }
+  .spotify-bars span:nth-child(2) { height: 100%; animation-delay: 0.2s; }
+  .spotify-bars span:nth-child(3) { height: 60%; animation-delay: 0.4s; }
+  .spotify-bars span:nth-child(4) { height: 80%; animation-delay: 0.1s; }
+  .spotify-bars span:nth-child(5) { height: 30%; animation-delay: 0.3s; }
+
+  @keyframes eq {
+    0%, 100% { transform: scaleY(0.3); }
+    50% { transform: scaleY(1); }
+  }
+
+  /* --- Aesthetic Photo Stickers --- */
+  .sticker {
+    width: var(--sticker-size);
+    height: var(--sticker-size);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    filter: drop-shadow(0 8px 12px rgba(0,0,0,0.45));
+    user-select: none;
+  }
+
+  .sticker img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 0;
+  }
+
+  /* small reset-button to replay */
+  .replay-btn {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 60;
+    background: rgba(255,255,255,0.15);
+    color: #f4d9d9;
+    border: 1px solid rgba(255,255,255,0.35);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    font-family: var(--letter-font);
+    font-size: 1.1rem;
+    padding: 6px 18px;
+    border-radius: 20px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .replay-btn.show { opacity: 1; pointer-events: auto; }
+  </style>
+</head>
+<body>
+
+<div id="intro-overlay"></div>
+<div id="dim-overlay"></div>
+
+<section class="cssletter">
+  <div class="envelope" id="envelope">
+    <button class="heart" id="openEnvelope" aria-label="Open Envelope">
+      <span class="heart-text">Open</span>
+    </button>
+    <div class="envelope-flap"></div>
+    <div class="envelope-folds">
+      <div class="envelope-left"></div>
+      <div class="envelope-right"></div>
+      <div class="envelope-bottom"></div>
+    </div>
+  </div>
+</section>
+
+<div class="burst-layer" id="burstLayer">
+
+  <div class="burst-item letter-card" id="letter1">
+    <div class="letter-inner">
+      <div class="letter-front">
+        <img src="assets/stickers/wave.png" alt="Wave Design" class="cover-wave">
+        <div class="flip-hint">Click to flip over ˚ʚ❤︎ɞ˚</div>
+      </div>
+      <blockquote class="letter-back" tabindex="0">
+        <button class="closeLetter" title="Close">Close</button>
+        <p>Di dalam segala hal di hidup ame, selalu ame bawa nama kamu dimanapun itu. Syukur ame kepada Allah SWT udah membawa kamu ke hidup ame, dan rasa syukur itu jugamerupakan ibadah yang selalu ame jalani. I love you, gina.</p>
+        <a href="flower.html" class="flower-link">
+          <button class="cite-btn" type="button">Click Me!</button>
+        </a>
+      </blockquote>
+    </div>
+  </div>
+
+  <div class="burst-item" id="ticket1" style="width: 240px; aspect-ratio: 2/1; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.35));">
+    <img src="assets/stickers/joong1.png" alt="Date Ticket" style="width: 100%; height: 100%; object-fit: contain;">
+  </div>
+
+  <div class="burst-item" id="bouquet1" style="width: var(--sticker-size-lg); filter: drop-shadow(0 12px 24px rgba(0,0,0,0.3));">
+    <img src="assets/stickers/joong2.png" alt="Bouquet" style="width: 100%; height: auto; object-fit: contain;">
+  </div>
+
+  <div class="burst-item polaroid" id="polaroid1">
+    <div class="photo">
+      <img src="assets/Gina/Gina(140).jpg" alt="Us" onerror="this.style.display='none'; this.parentNode.innerText='📸'">
+    </div>
+    <div class="caption">Cutest Picture Of Gina</div>
+  </div>
+
+  <div class="burst-item polaroid" id="polaroid2">
+    <div class="photo">
+      <img src="assets/Gina/Gina(15).jpg" alt="Favorite smile" onerror="this.style.display='none'; this.parentNode.innerText='🥰'">
+    </div>
+    <div class="caption">My Goddess Rockstar</div>
+  </div>
+
+  <div class="burst-item scratch-container" id="scratchCard1">
+    <div class="scratch-content">
+      <h4>Scratch Me! ❤</h4>
+      <p>Congrats, you won free makeup & skincare!</p>
+    </div>
+    <canvas class="scratch-canvas" id="scratchCanvas"></canvas>
+  </div>
+
+  <div class="burst-item spotify-card" id="spotify1">
+    <div class="spotify-art">
+      <img src="music/green.jpg" alt="Album Art" onerror="this.style.display='none'; this.parentNode.innerText='🎵'">
+    </div>
+    <div class="spotify-info">
+      <div class="spotify-title">Last Night On Earth</div>
+      <div class="spotify-artist">Green Day</div>
+      <div class="spotify-bars">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="burst-item sticker" id="sticker1">
+    <img src="assets/stickers/sticker1.png" alt="Sticker 1" onerror="this.style.display='none'; this.parentNode.innerText=''">
+  </div>
+  <div class="burst-item sticker" id="sticker2">
+    <img src="assets/stickers/sticker2.png" alt="Sticker 2" onerror="this.style.display='none'; this.parentNode.innerText=''">
+  </div>
+  <div class="burst-item sticker" id="sticker3">
+    <img src="assets/stickers/sticker3.png" alt="Sticker 3" onerror="this.style.display='none'; this.parentNode.innerText=''">
+  </div>
+  <div class="burst-item sticker" id="sticker4">
+    <img src="assets/stickers/sticker4.png" alt="Sticker 4" onerror="this.style.display='none'; this.parentNode.innerText=''">
+  </div>
+
+</div>
+
+<button class="replay-btn" id="replayBtn">replay ˚ʚ❤︎ɞ˚</button>
+
+<audio id="pageAudio" src="music/Last.mp3" loop preload="auto"></audio>
+
+<script>
+  /* ===================== Flower Spiral Burst (intro) ===================== */
+  function createSpiralBurst() {
+    const overlay = document.getElementById('intro-overlay');
+    const totalFlowers = 140;
+
+    const flowerImages = [
+      'assets/flowers/flower1.png','assets/flowers/flower2.png','assets/flowers/flower3.png',
+      'assets/flowers/flower4.png','assets/flowers/flower6.png','assets/flowers/flower7.png',
+      'assets/flowers/flower8.png','assets/flowers/flower9.png','assets/flowers/flower10.png',
+    ];
+
+    const vwDim = window.innerWidth, vhDim = window.innerHeight;
+    const maxReach = Math.sqrt(vwDim * vwDim + vhDim * vhDim) * 0.7;
+
+    for (let i = 0; i < totalFlowers; i++) {
+      const flower = document.createElement('div');
+      const imgPath = flowerImages[Math.floor(Math.random() * flowerImages.length)];
+      flower.className = 'intro-flower';
+      flower.style.backgroundImage = `url('${imgPath}')`;
+
+      const arms = 6;
+      const t = (i / totalFlowers);
+      const baseAngle = ((i % arms) / arms) * 2 * Math.PI;
+      const spiralAngle = baseAngle + t * 3.5 * Math.PI;
+      const dist = t * maxReach;
+
+      const tx = Math.cos(spiralAngle) * dist;
+      const ty = Math.sin(spiralAngle) * dist;
+      const midDist = dist * 0.5;
+      const midAngle = spiralAngle - 0.3;
+
+      flower.style.setProperty('--tx', tx + 'px');
+      flower.style.setProperty('--ty', ty + 'px');
+      flower.style.setProperty('--tx-mid', (Math.cos(midAngle) * midDist) + 'px');
+      flower.style.setProperty('--ty-mid', (Math.sin(midAngle) * midDist) + 'px');
+      flower.style.setProperty('--rot-mid', ((Math.random() > 0.5 ? 1 : -1) * (180 + t * 360) * 0.5) + 'deg');
+      flower.style.setProperty('--rot-end', ((Math.random() > 0.5 ? 1 : -1) * (180 + t * 360)) + 'deg');
+      flower.style.setProperty('--scale-mid', 1.2 + t * 0.8);
+      flower.style.setProperty('--scale-end', 2.5 + (1 - t) * 1.5 + Math.random() * 0.5);
+      flower.style.setProperty('--size', (80 + Math.random() * 40) + 'px');
+      flower.style.setProperty('--duration', (1.5 + (1 - t) * 0.5) + 's');
+      flower.style.setProperty('--delay', (t * 1.5 + Math.random() * 0.2) + 's');
+
+      overlay.appendChild(flower);
+    }
+  }
+  createSpiralBurst();
+
+  /* ===================== Envelope Burst Logic ===================== */
+  const envelope = document.getElementById('envelope');
+  const burstLayer = document.getElementById('burstLayer');
+  const replayBtn = document.getElementById('replayBtn');
+  let zIndexCounter = 100;
+
+  const burstPlan = [
+    { id: 'letter1',       x: () => rnd(-0.34, -0.16) * vw(), y: () => rnd(-0.22, -0.02) * vh(), rot: () => rnd(-6, 6),   scale: 1,    delay: 0   },
+    { id: 'ticket1',       x: () => rnd(-0.38, -0.20) * vw(), y: () => rnd(0.02, 0.18) * vh(),  rot: () => rnd(-10, 10),  scale: 1,    delay: 180 },
+    { id: 'bouquet1',      x: () => rnd(0.20, 0.38) * vw(),   y: () => rnd(-0.15, 0.05) * vh(), rot: () => rnd(-12, 12),  scale: 0.9,  delay: 210 },
+    { id: 'polaroid1',     x: () => rnd(0.05, 0.24) * vw(),   y: () => rnd(-0.30, -0.10) * vh(), rot: () => rnd(-14, -4), scale: 1,    delay: 90  },
+    { id: 'polaroid2',     x: () => rnd(0.16, 0.34) * vw(),   y: () => rnd(0.04, 0.22) * vh(),   rot: () => rnd(6, 16),   scale: 1,    delay: 160 },
+    { id: 'scratchCard1',  x: () => rnd(-0.25, 0.05) * vw(),  y: () => rnd(-0.40, -0.25) * vh(), rot: () => rnd(-8, 8),   scale: 1,    delay: 110 },
+    { id: 'spotify1',      x: () => rnd(-0.10, 0.06) * vw(),  y: () => rnd(0.20, 0.34) * vh(),   rot: () => rnd(-4, 4),   scale: 1,    delay: 230 },
+    { id: 'sticker1',      x: () => rnd(-0.34, -0.22) * vw(), y: () => rnd(0.14, 0.28) * vh(),   rot: () => rnd(-25, 25), scale: 1.1, delay: 60  },
+    { id: 'sticker2',      x: () => rnd(0.28, 0.40) * vw(),   y: () => rnd(-0.28, -0.16) * vh(), rot: () => rnd(-25, 25), scale: 1.1, delay: 130 },
+    { id: 'sticker3',      x: () => rnd(-0.06, 0.06) * vw(),  y: () => rnd(-0.40, -0.30) * vh(), rot: () => rnd(-25, 25), scale: 1.1, delay: 190 },
+    { id: 'sticker4',      x: () => rnd(0.34, 0.42) * vw(),   y: () => rnd(0.18, 0.32) * vh(),   rot: () => rnd(-25, 25), scale: 1.1, delay: 260 },
+  ];
+
+  function vw() { return Math.min(window.innerWidth, 1100); }
+  function vh() { return Math.min(window.innerHeight, 800); }
+  function rnd(min, max) { return min + Math.random() * (max - min); }
+
+  function throwItemsOut() {
+    initScratchCard();
+    burstPlan.forEach((plan) => {
+      const el = document.getElementById(plan.id);
+      if (!el) return;
+      setTimeout(() => {
+        el.style.setProperty('--fx', plan.x() + 'px');
+        el.style.setProperty('--fy', plan.y() + 'px');
+        el.style.setProperty('--frot', plan.rot() + 'deg');
+        el.style.setProperty('--fscale', plan.scale);
+        el.classList.add('flying');
+        el.style.zIndex = zIndexCounter++;
+        makeDraggable(el);
+      }, plan.delay);
+    });
+    setTimeout(() => replayBtn.classList.add('show'), 1200);
+  }
+
+  function resetBurst() {
+    // Recreate canvas if missing
+    const container = document.getElementById('scratchCard1');
+    if (container && !document.getElementById('scratchCanvas')) {
+      const newCanvas = document.createElement('canvas');
+      newCanvas.className = 'scratch-canvas';
+      newCanvas.id = 'scratchCanvas';
+      container.appendChild(newCanvas);
+      scratchInitialized = false;
+    }
+
+    burstPlan.forEach((plan) => {
+      const el = document.getElementById(plan.id);
+      if (!el) return;
+      el.classList.remove('flying');
+      el.classList.remove('flipped'); // Reset flippable orientation
+      el.style.display = '';
+      el.style.position = 'absolute';
+      el.style.top = '50%';
+      el.style.left = '50%';
+    });
+    envelope.classList.remove('active');
+    replayBtn.classList.remove('remove');
+    replayBtn.classList.remove('show');
+  }
+
+  document.getElementById('openEnvelope').addEventListener('click', () => {
+    envelope.classList.add('active');
+    setTimeout(throwItemsOut, 350);
+  });
+
+  replayBtn.addEventListener('click', resetBurst);
+
+  /* ===================== Dragging (mouse + touch) ===================== */
+  function makeDraggable(el) {
+    if (el.dataset.draggable === 'true') return;
+    el.dataset.draggable = 'true';
+
+    let isMove = false;
+    let sX = 0, sY = 0;
+
+    const dragStarter = (e) => {
+      if (e.target.tagName === 'BUTTON' || e.target.closest('.flower-link') || e.target.classList.contains('scratch-canvas')) return;
+      
+      const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+      const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+      
+      sX = clientX;
+      sY = clientY;
+      isMove = false;
+
+      startDrag(el, clientX, clientY);
+      
+      const onMove = (moveEvent) => {
+        const mX = moveEvent.type.includes('touch') ? moveEvent.touches[0].clientX : moveEvent.clientX;
+        const mY = moveEvent.type.includes('touch') ? moveEvent.touches[0].clientY : moveEvent.clientY;
+        
+        // Check movement threshold to differentiate between a drag and a simple layout click
+        if (Math.abs(mX - sX) > 6 || Math.abs(mY - sY) > 6) {
+          isMove = true;
+        }
+        moveDrag(el, mX, mY);
+      };
+      
+      const onUp = (upEvent) => {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        document.removeEventListener('touchmove', onMove);
+        document.removeEventListener('touchend', onUp);
+
+        // Flip trigger logic on pure click touch release
+        if (!isMove && el.id === 'letter1') {
+          const clickedFrontCover = upEvent.target.closest('.letter-front');
+          if (clickedFrontCover) {
+            el.classList.add('flipped');
+          }
+        }
+      };
+
+      if (e.type.includes('touch')) {
+        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('touchend', onUp);
+      } else {
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+        e.preventDefault();
+      }
+    };
+
+    el.addEventListener('mousedown', dragStarter);
+    el.addEventListener('touchstart', dragStarter, { passive: true });
+  }
+
+  let dragOffsetX = 0, dragOffsetY = 0;
+  function startDrag(el, clientX, clientY) {
+    const rect = el.getBoundingClientRect();
+    el.style.transition = 'none';
+    el.style.position = 'fixed';
+    el.style.left = rect.left + 'px';
+    el.style.top = rect.top + 'px';
+    el.style.transform = 'none';
+    el.style.zIndex = zIndexCounter++;
+    dragOffsetX = clientX - rect.left;
+    dragOffsetY = clientY - rect.top;
+  }
+  function moveDrag(el, clientX, clientY) {
+    el.style.left = (clientX - dragOffsetX) + 'px';
+    el.style.top = (clientY - dragOffsetY) + 'px';
+  }
+
+  /* ===================== Close letter ===================== */
+  document.querySelectorAll('.closeLetter').forEach((button) => {
+    button.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const letter = e.target.closest('.letter-card');
+      if (letter) letter.style.display = 'none';
+    });
+  });
+
+  /* ===================== Outro Dim & Redirect (Click Me! -> flower.html) ===================== */
+  document.querySelectorAll('.flower-link').forEach((link) => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const destination = link.getAttribute('href');
+      const dimOverlay = document.getElementById('dim-overlay');
+
+      // Stop the love letter music gracefully before leaving
+      if (typeof pageAudio !== 'undefined' && pageAudio) {
+        pageAudio.pause();
+      }
+
+      dimOverlay.classList.add('active');
+
+      setTimeout(() => {
+        window.location.href = destination;
+      }, 1400);
+    });
+  });
+
+  /* ===================== Scratch Card Rendering Logic ===================== */
+  let scratchInitialized = false;
+  function initScratchCard() {
+    if (scratchInitialized) return;
+    const canvas = document.getElementById('scratchCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    canvas.width = canvas.offsetWidth || 260;
+    canvas.height = canvas.offsetHeight || 160;
+
+    ctx.fillStyle = '#b0b5b3';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.font = '20px Jost, Arial, sans-serif';
+    ctx.fillStyle = '#5c5e5d';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Scratch here with love ✨', canvas.width / 2, canvas.height / 2);
+
+    let isDrawing = false;
+
+    function checkPercentageCleared() {
+      try {
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const pixels = imgData.data;
+        let clearedCount = 0;
+        // Step through every 4th pixel alpha value for speed optimization
+        for (let i = 3; i < pixels.length; i += 16) {
+          if (pixels[i] === 0) clearedCount++;
+        }
+        const totalSampled = pixels.length / 16;
+        if (clearedCount / totalSampled > 0.45) { // 45%+ cleared threshold
+          canvas.style.transition = 'opacity 0.6s ease';
+          canvas.style.opacity = '0';
+          setTimeout(() => canvas.remove(), 600);
+        }
+      } catch (e) { console.log(e); }
+    }
+
+    function scratch(e) {
+      if (!isDrawing) return;
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+      const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.beginPath();
+      ctx.arc(x, y, 18, 0, Math.PI * 2);
+      ctx.fill();
+      checkPercentageCleared();
+    }
+
+    const startScratching = (e) => { isDrawing = true; scratch(e); };
+    const stopScratching = () => { isDrawing = false; };
+
+    canvas.addEventListener('mousedown', startScratching);
+    canvas.addEventListener('mousemove', scratch);
+    canvas.addEventListener('mouseup', stopScratching);
+    canvas.addEventListener('mouseleave', stopScratching);
+
+    canvas.addEventListener('touchstart', startScratching, { passive: true });
+    canvas.addEventListener('touchmove', scratch, { passive: true });
+    canvas.addEventListener('touchend', stopScratching);
+
+    scratchInitialized = true;
+  }
+
+  /* ===================== Audio Controller Handling ===================== */
+  const pageAudio = document.getElementById("pageAudio");
+  let audioStarted = false;
+
+  function initAudio() {
+    if (audioStarted) return;
+    pageAudio.volume = 0.8;
+    pageAudio.play().then(() => {
+      audioStarted = true;
+      console.log("Audio started successfully");
+    }).catch(err => {
+      console.log("Audio failed:", err);
+    });
+  }
+
+  document.addEventListener("click", initAudio, { once: true });
+  document.addEventListener("touchstart", initAudio, { once: true });
+  document.addEventListener("keydown", initAudio, { once: true });
+</script>
+
+</body>
+</html>
